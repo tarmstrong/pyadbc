@@ -25,7 +25,7 @@ class List(object):
     def append_buggy(self, bla):
         self.things.append(bla)
 
-    @ensures(lambda self: True)
+    @ensures()
     def size(self):
         return self._size
 
