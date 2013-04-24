@@ -38,6 +38,25 @@ def invariant(*iconditions):
         return klass
     return classwrapper
 
+def dbcinherit(klass):
+    import inspect
+    child_class_methods = dict(inspect.getmembers(klass))
+    for b in klass.__bases__:
+        dbcmethods = [(mname, m.cw) for (mname, m) in inspect.getmembers(b) if hasattr(m, 'cw')]
+        dbcmethods_dict = dict(dbcmethods)
+        for method_name, parent_method in dbcmethods_dict.items():
+            child_method = child_class_methods[method_name]
+
+            # Check whether or not the method has been overridden.
+            if not hasattr(child_method, 'cw'):
+                import copy
+                cw = copy.deepcopy(parent_method)
+                cw.method = child_method
+                def call_wrapper(self, *args, **kwargs):
+                    return cw(self, *args, **kwargs)
+                call_wrapper.cw = cw
+                setattr(klass, method_name, call_wrapper)
+    return klass
 
 def requires(*preconditions):
     """Decorator to specify a precondition on a method.

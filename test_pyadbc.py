@@ -29,6 +29,7 @@ class List(object):
     def size(self):
         return self._size
 
+@dbcinherit
 class CoolList(List):
     def append(self, bla):
         self.things.append(bla)

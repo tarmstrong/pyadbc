@@ -55,6 +55,23 @@ If any conditions defined by the above decorators evaluate to `False`, one of th
 * `PostconditionFailedException`, which implies that the object itself failed to satisfy its class's contract.
 * `InvariantFailedException`, which implies that the object has entered an illegal state.
 
+### `@dbcinherit` for inheriting classes
+
+As my professor Dr. Constantinos Constantinides pointed out via email, an important feature of DBC is that it
+can validate the [Liskov Substitution Principle](https://en.wikipedia.org/wiki/Liskov_substitution_principle).
+That is, if a child class `CoolList` inherits from the base class `List`, its operations should satsify
+`List`'s contracts. This gives some assurance that the principle holds for the child class.
+
+To do this with PyADBC, you need to explicitly decorate the child class, e.g.:
+
+    @dbcinherit
+    class CoolList(List):
+       # ...
+
+If `CoolList` overrides the `append()` method, the contract of `List`'s `append()` method will be applied to `CoolList`'s `append()`.
+
+This also currently works with multiple inheritance.
+
 ## Other solutions
 
 * [PyDBC](http://www.nongnu.org/pydbc/), which uses a metaclass.
