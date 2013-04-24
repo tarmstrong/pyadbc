@@ -29,6 +29,10 @@ class List(object):
     def size(self):
         return self._size
 
+class CoolList(List):
+    def append(self, bla):
+        self.things.append(bla)
+
 def test_normal():
     """This should execute normally."""
     t = List(10)
@@ -83,6 +87,26 @@ def test_old():
     t = List(10)
     try:
         t.doThing()
+        assert False
+    except PostconditionFailedException as e:
+        assert True
+
+def test_liskov():
+    t = CoolList(2)
+    try:
+        t.append_buggy(1)
+        assert False
+    except PostconditionFailedException as e:
+        assert True
+    # Thanks to Prof. Constantinos Constantinides for
+    # pointing out this problem with the original implementation.
+    #
+    # This append should fail because it doesn't
+    # meet the postcondition of the parent class.
+    # (Liskov substitution principle)
+    t = CoolList(2)
+    try:
+        t.append(1)
         assert False
     except PostconditionFailedException as e:
         assert True
