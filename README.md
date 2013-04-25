@@ -57,7 +57,7 @@ If any conditions defined by the above decorators evaluate to `False`, one of th
 
 ### `@dbcinherit` for inheriting classes
 
-As my professor Dr. Constantinos Constantinides pointed out via email, an important feature of DBC is that it
+An important feature of DBC is that it
 can validate the [Liskov Substitution Principle](https://en.wikipedia.org/wiki/Liskov_substitution_principle).
 That is, if a child class `CoolList` inherits from the base class `List`, its operations should satsify
 `List`'s contracts. This gives some assurance that the principle holds for the child class.
@@ -80,3 +80,9 @@ This also currently works with multiple inheritance.
 ## Contributing
 
 See `TODO.md` for missing features. Suggestions and bug reports are always welcome.
+
+## Acknowledgements
+
+Thanks to
+
+* Prof. Constantinos Constantinides, for his feedback regarding Liskov and for teaching me about DBC in the first place
