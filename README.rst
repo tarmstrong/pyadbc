@@ -20,7 +20,6 @@ Contract <https://en.wikipedia.org/wiki/Design_by_contract>`__.
 Invariants, pre- and post-conditions are added using decorators.
 
 * Free software: BSD license
-* Documentation: http://pyadbc.rtfd.org.
 
 Usage
 -----
