@@ -111,3 +111,6 @@ def test_liskov():
         assert False
     except PostconditionFailedException as e:
         assert True
+
+if __name__ == '__main__':
+    test_liskov()
