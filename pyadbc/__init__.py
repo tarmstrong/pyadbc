@@ -14,9 +14,18 @@ __author__ = 'Tavish Armstrong'
 __email__ = 'tavisharmstrong@gmail.com'
 __version__ = '0.1.0'
 
-class PreconditionFailedException(Exception): pass
-class PostconditionFailedException(Exception): pass
-class InvariantFailedException(Exception): pass
+
+class PreconditionFailedException(Exception):
+    pass
+
+
+class PostconditionFailedException(Exception):
+    pass
+
+
+class InvariantFailedException(Exception):
+    pass
+
 
 def invariant(*iconditions):
     """Decorator to specify an invariant on a class.
@@ -35,21 +44,25 @@ def invariant(*iconditions):
                 self.elements = []
     """
     import inspect
+
     def classwrapper(klass):
         conditions = []
         for condition in iconditions:
-            conditions.append(_Condition(condition, inv = True))
+            conditions.append(_Condition(condition, inv=True))
         methods = inspect.getmembers(klass, predicate=inspect.ismethod)
         for method in methods:
             _invariant_wrap(klass, method, conditions)
         return klass
     return classwrapper
 
+
 def dbcinherit(klass):
     import inspect
     child_class_methods = dict(inspect.getmembers(klass))
     for b in klass.__bases__:
-        dbcmethods = [(mname, m.cw) for (mname, m) in inspect.getmembers(b) if hasattr(m, 'cw')]
+        dbcmethods = [(mname, m.cw)
+                      for (mname, m) in inspect.getmembers(b)
+                      if hasattr(m, 'cw')]
         dbcmethods_dict = dict(dbcmethods)
         for method_name, parent_method in dbcmethods_dict.items():
             child_method = child_class_methods[method_name]
@@ -59,11 +72,13 @@ def dbcinherit(klass):
                 import copy
                 cw = copy.deepcopy(parent_method)
                 cw.method = child_method
+
                 def call_wrapper(self, *args, **kwargs):
                     return cw(self, *args, **kwargs)
                 call_wrapper.cw = cw
                 setattr(klass, method_name, call_wrapper)
     return klass
+
 
 def requires(*preconditions):
     """Decorator to specify a precondition on a method.
@@ -84,17 +99,20 @@ def requires(*preconditions):
     conditions = []
     for precond in preconditions:
         conditions.append(_Condition(precond))
+
     def method_wrapper(method):
         if hasattr(method, 'cw'):
             method.cw.preconds.extend(conditions)
             cw = method.cw
         else:
             cw = _PyADBCMethodCallWrapper(method, pre_conditions=conditions)
+
         def call_wrapper(self, *args, **kwargs):
             return cw(self, *args, **kwargs)
         call_wrapper.cw = cw
         return call_wrapper
     return method_wrapper
+
 
 def ensures(*postconditions):
     """Decorator to specify a postcondition on a method.
@@ -116,20 +134,23 @@ def ensures(*postconditions):
     conditions = []
     for postcond in postconditions:
         conditions.append(_Condition(postcond))
+
     def method_wrapper(method):
         if hasattr(method, 'cw'):
             method.cw.postconds.extend(conditions)
             cw = method.cw
         else:
             cw = _PyADBCMethodCallWrapper(method, post_conditions=conditions)
+
         def call_wrapper(self, *args, **kwargs):
             return cw(self, *args, **kwargs)
         call_wrapper.cw = cw
         return call_wrapper
     return method_wrapper
 
+
 def old(oldfun):
-    """Decorator to capture values for use in the @ensures decorator conditions.
+    """Capture values for use in the @ensures decorator conditions.
 
     A @ensures decorator may wish to compare the state of the object before
     the method was invoked to the state of the object after the method was
@@ -151,17 +172,20 @@ def old(oldfun):
             cw = method.cw
         else:
             cw = _PyADBCMethodCallWrapper(method, olds=[oldfun])
+
         def call_wrapper(self, *args, **kwargs):
             return cw(self, *args, **kwargs)
         call_wrapper.cw = cw
         return call_wrapper
     return method_wrapper
 
+
 class _Condition(object):
-    def __init__(self, condition, inv = False):
+    def __init__(self, condition, inv=False):
         self.condition = condition
         self._invariant = inv
-    def __call__(self, calleeself, old = {}):
+
+    def __call__(self, calleeself, old={}):
         condition = self.condition
         import inspect
         argspec = inspect.getargspec(condition)
@@ -170,13 +194,14 @@ class _Condition(object):
         else:
             return condition(calleeself)
 
+
 class _PyADBCMethodCallWrapper(object):
     """Wrapper for methods that have been decorated by pyadbc.
 
     This object's __call__ method is what runs when the "contracted" method is
     invoked.
     """
-    def __init__(self, method, pre_conditions=[], post_conditions = [], olds = []):
+    def __init__(self, method, pre_conditions=[], post_conditions=[], olds=[]):
         self.method = method
         self.preconds = list(pre_conditions)
         self.postconds = list(post_conditions)
@@ -193,7 +218,7 @@ class _PyADBCMethodCallWrapper(object):
         self.oldvals = oldvals
         # Check the preconditions.
         for cond in self.preconds:
-            if cond(calleeself) != True:
+            if not cond(calleeself):
                 if cond._invariant:
                     raise InvariantFailedException()
                 else:
@@ -201,12 +226,13 @@ class _PyADBCMethodCallWrapper(object):
         result = method(calleeself, *args, **kwargs)
         # Check the postconditions.
         for cond in self.postconds:
-            if cond(calleeself, oldvals) != True:
+            if not cond(calleeself, oldvals):
                 if cond._invariant:
                     raise InvariantFailedException()
                 else:
                     raise PostconditionFailedException()
         return result
+
 
 def _invariant_wrap(klass, method, conditions):
     method_name = method[0]
@@ -220,12 +246,15 @@ def _invariant_wrap(klass, method, conditions):
     else:
         if method_name == '__init__':
             cw = _PyADBCMethodCallWrapper(mfunc, post_conditions=conditions)
+
             def call_wrapper(self, *args, **kwargs):
                 return cw(self, *args, **kwargs)
             call_wrapper.cw = cw
             setattr(klass, method_name, call_wrapper)
         else:
-            cw = _PyADBCMethodCallWrapper(mfunc, post_conditions=conditions, pre_conditions=conditions)
+            cw = _PyADBCMethodCallWrapper(
+                mfunc, post_conditions=conditions, pre_conditions=conditions)
+
             def call_wrapper(self, *args, **kwargs):
                 return cw(self, *args, **kwargs)
             call_wrapper.cw = cw
