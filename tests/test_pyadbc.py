@@ -1,4 +1,14 @@
-from pyadbc import *
+from pyadbc import (
+    invariant,
+    requires,
+    ensures,
+    old,
+    dbcinherit,
+    PreconditionFailedException,
+    PostconditionFailedException,
+    InvariantFailedException,
+)
+
 
 @invariant(lambda self: self.capacity >= 0)
 class List(object):
@@ -9,7 +19,7 @@ class List(object):
         self.x = 10
 
     @ensures(lambda self, old: old['x'] + 1 == self.x,
-            lambda self, old: old['size'] < 0)
+             lambda self, old: old['size'] < 0)
     @old(lambda self: {'x': self.x, 'size': self._size})
     def doThing(self):
         self.x -= 1
@@ -29,10 +39,12 @@ class List(object):
     def size(self):
         return self._size
 
+
 @dbcinherit
 class CoolList(List):
     def append(self, bla):
         self.things.append(bla)
+
 
 def test_normal():
     """This should execute normally."""
@@ -40,6 +52,7 @@ def test_normal():
     for i in range(10):
         t.append(i)
     assert True
+
 
 def test_prefail():
     """Precondition should fail
@@ -50,8 +63,9 @@ def test_prefail():
     try:
         t.append(1)
         assert False
-    except PreconditionFailedException as e:
+    except PreconditionFailedException:
         assert True
+
 
 def test_postfail():
     """Postcondition should fail
@@ -60,17 +74,19 @@ def test_postfail():
     try:
         t.append_buggy(1)
         assert False
-    except PostconditionFailedException as e:
+    except PostconditionFailedException:
         assert True
+
 
 def test_invfail():
     """The invariant doesn't hold after the
     constructor is called."""
     try:
-        t = List(-1)
+        List(-1)
         assert False
-    except InvariantFailedException as e:
+    except InvariantFailedException:
         assert True
+
 
 def test_invfail2():
     """The invariant is broken before calling
@@ -81,23 +97,25 @@ def test_invfail2():
     try:
         t.append(1)
         assert False
-    except InvariantFailedException as e:
+    except InvariantFailedException:
         assert True
+
 
 def test_old():
     t = List(10)
     try:
         t.doThing()
         assert False
-    except PostconditionFailedException as e:
+    except PostconditionFailedException:
         assert True
+
 
 def test_liskov():
     t = CoolList(2)
     try:
         t.append_buggy(1)
         assert False
-    except PostconditionFailedException as e:
+    except PostconditionFailedException:
         assert True
     # Thanks to Prof. Constantinos Constantinides for
     # pointing out this problem with the original implementation.
@@ -109,7 +127,7 @@ def test_liskov():
     try:
         t.append(1)
         assert False
-    except PostconditionFailedException as e:
+    except PostconditionFailedException:
         assert True
 
 if __name__ == '__main__':
